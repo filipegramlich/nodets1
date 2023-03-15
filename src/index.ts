@@ -1,7 +1,8 @@
-import express, { Request, Response } from 'express';
-import 'express-async-errors';
+import express, { NextFunction, Request, Response } from 'express';
 import { AppError } from './utils/AppError';
+import { sqliteConnection } from './database/sqlite';
 import { routes } from './routes';
+import 'express-async-errors';
 
 const app = express();
 const port = 3333;
@@ -10,7 +11,9 @@ app.use(express.json());
 
 app.use(routes);
 
-app.use((error:any, request: Request, response: Response, next:any) => {
+sqliteConnection();
+
+app.use((error:Error, request: Request, response: Response, next:NextFunction) => {
 
     if (error instanceof AppError) {
         return response.status(error.statusCode).json({
