@@ -1,12 +1,14 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, query, response } from 'express';
 
+const routes = require('./routes')
 const app = express();
 const port = 3000;
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Olá, mundo!');
-});
+app.use(routes)
+app.use(express.json());
 
 app.listen(port, () => {
-  console.log(`Servidor rodando na porta ${port}`);
+    console.log(`Servidor rodando na porta ${port}`);
 });
+
+
