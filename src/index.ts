@@ -1,17 +1,16 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { AppError } from './utils/AppError';
-import { sqliteConnection } from './database/sqlite';
 import { routes } from './routes';
+import { migrationsRun } from './database/sqlite/migrations';
 import 'express-async-errors';
 
 const app = express();
 const port = 3333;
 
+migrationsRun();
+
 app.use(express.json());
-
 app.use(routes);
-
-sqliteConnection();
 
 app.use((error:Error, request: Request, response: Response, next:NextFunction) => {
 
