@@ -1,16 +1,24 @@
 import { Request, Response } from "express";
 import { AppError } from "../utils/AppError";
+import { sqliteConnection } from "../database/sqlite";
 
 export class UsersController {
 
-    create( request:Request, response:Response ){
+    async create(request: Request, response: Response) {
 
-        const { email, name, age } = request.body;
+        const { email, name, password } = request.body;
 
-        if(!name){
-            throw new AppError("Nome é obrigatório!");
+        const database = await sqliteConnection();
+
+        const checkUserExists = await database.get('SELECT email FROM users WHERE email = (?)', [email]);
+
+        if (checkUserExists) {
+            throw new AppError('Este email já está em uso!');
         }
 
-        response.status(201).json(`Nome: ${name}, Email: ${email}, Idade: ${age}`);
+        await database.run('INSERT INTO users(name, email, password) VALUES (?, ?, ?)', 
+        [name, email, password]);
+
+        return response.status(201).json();
     }
 }
