@@ -1,8 +1,8 @@
 import express, { NextFunction, Request, Response } from 'express';
+import 'express-async-errors';
 import { AppError } from './utils/AppError';
 import { routes } from './routes';
 import { migrationsRun } from './database/sqlite/migrations';
-import 'express-async-errors';
 
 const app = express();
 const port = 3333;
