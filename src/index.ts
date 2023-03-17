@@ -5,7 +5,7 @@ import { routes } from './routes';
 import { migrationsRun } from './database/sqlite/migrations';
 
 const app = express();
-const port = 3333;
+const port = 3000;
 
 migrationsRun();
 

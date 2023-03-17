@@ -1,4 +1,4 @@
-import { hash } from "bcryptjs";
+import { hash, compare } from "bcryptjs";
 import { Request, Response } from "express";
 import { AppError } from "../utils/AppError";
 import { sqliteConnection } from "../database/sqlite";
@@ -12,58 +12,64 @@ export class UsersController {
         const database = await sqliteConnection();
 
         const hashedPassword = await hash(password, 8);
-
-        const checkUserExists = await database.get('SELECT email FROM users WHERE email = (?)', [email]);
-
-        if (checkUserExists) {
+        
+        try {
+            await database.run('INSERT INTO users(name, email, password) VALUES (?, ?, ?)',
+            [name, email, hashedPassword])
+        } catch (error) {
             throw new AppError('Este email já está em uso!');
         }
-
-        await database.run('INSERT INTO users(name, email, password) VALUES (?, ?, ?)',
-            [name, email, hashedPassword]);
 
         return response.status(201).json();
     }
 
     async update(request: Request, response: Response) {
 
-        console.log('Entrou no método update');
-
-        const { name, email } = request.body;
+        const { name, email, password, old_password } = request.body;
         const { id } = request.params;
 
         const database = await sqliteConnection();
-        const user = await database.get('SELECT * FROM users WHERE id = (?)', [id]);
+        const user = await database.get('SELECT * FROM users WHERE id = (?) ', [id]);
 
         if (!user) {
-            console.log('Entrou no check user');
-            throw new AppError('Usuário não encontrado!');
-        } else if (user) {
-            console.log('Passou pelo check user')
+            throw new AppError('Usuário não encontrado!', 404);
         }
 
-        const userWithUpdatedEmail = await database.get('SELECT * FROM users WHERE email = (?)', [email]);
+        const userWithTheSameEmail = await database.get('SELECT * FROM users WHERE email = (?)', [email]);
 
-        if (userWithUpdatedEmail && userWithUpdatedEmail.id !== user.id){
-            console.log("Entrou no check email");
+        if (userWithTheSameEmail && userWithTheSameEmail.id !== user.id){
             throw new AppError('Esse email já está em uso!');
-        } else if (userWithUpdatedEmail && userWithUpdatedEmail.id == user.id){
-            console.log("Passou pelo check email");
         }
 
-        user.name = name;
-        user.email = email;
+        user.name = name ?? user.name;
+        user.email = email ?? user.email;
+
+        if(password && !old_password){
+            throw new AppError('Você precisa informar a senha antiga para redefinir a senha!')
+        }
+
+        if(password && old_password){
+            const checkOldPassword = await compare(old_password, user.password );
+
+            if(!checkOldPassword){
+                throw new AppError('A senha antiga não confere!');
+            } 
+
+            user.password = await hash(password, 8);
+        }
 
         await database.run(`
             UPDATE users SET 
             name = ?,
             email = ?,
-            updated_at = ?,
-            id = ?`, 
-            [user.name, user.email, new Date(), id]
+            password = ?,
+            updated_at = DATETIME('now')
+            WHERE id = ?
+           `, 
+            [user.name, user.email, user.password, id]
         );
 
         return response.json();
-
+        
     }
 } 
