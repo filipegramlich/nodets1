@@ -39,4 +39,18 @@ export class NotesController {
 
         response.json();
     }
+
+    async show(request: Request, response: Response) {
+
+        const { id } = request.params;
+        const noteSelected = await knex('notes').where({ id }).first();
+        const tags = await knex('tags').where({ note_id: id }).orderBy('name');
+        const links = await knex('links').where({ note_id: id }).orderBy('created_at');
+
+        return response.json({
+            ...noteSelected,
+            tags,
+            links
+        });
+    }
 }
