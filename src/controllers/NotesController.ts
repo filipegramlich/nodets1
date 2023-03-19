@@ -5,12 +5,8 @@ export class NotesController {
 
     async create(request: Request, response: Response) {
 
-        console.log('entrou no metodo de create nota');
-
         const { title, description, tags, links } = request.body;
         const { user_id } = request.params;
-
-        console.log(user_id)
 
         const [note_id] = await knex('notes').insert({
             title,
@@ -41,7 +37,6 @@ export class NotesController {
     }
 
     async show(request: Request, response: Response) {
-
         const { id } = request.params;
         const noteSelected = await knex('notes').where({ id }).first();
         const tags = await knex('tags').where({ note_id: id }).orderBy('name');
@@ -63,4 +58,41 @@ export class NotesController {
         return response.json();
     }
 
+    async index(request: Request, response: Response) {
+
+        const { title, user_id, tags } = request.query;
+
+        let notes;
+
+        if (tags) {
+            const filterTags = (tags as string).split(',').map((tag: string) => tag.trim());
+
+            notes = await knex('tags')
+                .select(['notes.id',
+                    'notes.title',
+                    'notes.user_id',
+                ]).where('notes.user_id', user_id)
+                .whereLike('notes.title', `%${title}%`)
+                .whereIn('name', filterTags)
+                .innerJoin('notes', 'notes.id', 'tags.note_id')
+        } else {
+            notes = await knex('notes').where({ user_id }).whereLike('title', `%${title}%`).orderBy('title');
+        }
+
+        const userTags = await knex('tags').where({ user_id });
+
+        const notesWithTags = notes.map((note: any) => {
+
+            const noteTags = userTags.filter((tag: any) => tag.note_id === note.id);
+
+            return {
+                ...note,
+                tags: noteTags
+            }
+        });
+
+        return response.json(notesWithTags);
+    }
 }
+
+
