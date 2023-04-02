@@ -5,7 +5,7 @@ export class TagsController {
 
     async index(request: Request, response: Response) {
 
-        const { user_id } = request.params;
+        const user_id = request.user.id;
 
         const tags = await knex('tags').where({ user_id });
 
