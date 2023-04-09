@@ -1,11 +1,14 @@
 import express, { NextFunction, Request, Response } from 'express';
 import 'express-async-errors';
+import cors from 'cors'
 import { AppError } from './utils/AppError';
 import { routes } from './routes';
 import { migrationsRun } from './database/sqlite/migrations';
 import { UPLOAD_FOLDER } from './configs/upload';
 
 const app = express();
+app.use(cors());
+
 const port = 3001;
 
 migrationsRun();
