@@ -4,7 +4,7 @@ import { AppError } from '../utils/AppError'
 import { UPLOAD_FOLDER, TMP_FOLDER } from '../configs/upload'
 
 export class DiskStorage {
-    async saveFile(file: string) {
+    async saveFile(file: any) {
         try {
             await fs.rename(
                 path.resolve(TMP_FOLDER, file),
@@ -18,7 +18,7 @@ export class DiskStorage {
         }
     }
 
-    async deleteFile(file: string) {
+    async deleteFile(file: any) {
         try {
 
             const filePath = path.resolve(UPLOAD_FOLDER, file);

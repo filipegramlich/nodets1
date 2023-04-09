@@ -3,6 +3,7 @@ import 'express-async-errors';
 import { AppError } from './utils/AppError';
 import { routes } from './routes';
 import { migrationsRun } from './database/sqlite/migrations';
+import { UPLOAD_FOLDER } from './configs/upload';
 
 const app = express();
 const port = 3001;
@@ -11,6 +12,8 @@ migrationsRun();
 
 app.use(express.json());
 app.use(routes);
+
+app.use('/files', express.static(UPLOAD_FOLDER));
 
 app.use((error:Error, request: Request, response: Response, next:NextFunction) => {
 
